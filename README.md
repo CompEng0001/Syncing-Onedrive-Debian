@@ -2,7 +2,7 @@
 This little script uses rclone to sync with onedrive on debian for the purpose of uploading pictures taken by the Pi to determine the humidity of dried material
 Once this script is placed in `crontab` it will upload pictures at a set interval with no need to manually reconfigure access tokens as the script deals with this autonomously. 
 
-## Dependentancies  
+## Dependencies 
 [Rclone](https://github.com/rclone/rclone) ("rsync for cloud storage") is a command line program to sync files and directories to and from different cloud storage providers.
 
 ## Code snippets
