@@ -24,7 +24,7 @@ A log file is created to.
   echo -e ${TIMESTAMP}".bmp" >> ${FILE}
 ```
 One thing to note that when using **Rclone** is that you will need to refersh for a new token for your cloud storage, usually every hour. 
-This bit of code extracts the expiry date time as `yyyymmddHHMMSS` the command `rclone config show` which returns a json and the expiry date fromat as `2020-12-02T10:02:23.6372829Z'
+This bit of code extracts the expiry date time as `yyyymmddHHMMSS` the command `rclone config show` which returns a json and the expiry date fromat as `2020-12-02T10:02:23.6372829Z`
 
 ```bash
     TOKENDATE=$(rclone config show  | grep -o '"expiry":"[^"]*' | grep -o '[^"]*$' | tr -d '-' | tr -d 'T' | tr -d ':' | awk -F "." '{print $1}' | tr -d " ")
