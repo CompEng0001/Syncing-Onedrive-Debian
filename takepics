@@ -1,0 +1,49 @@
+#!/bin/bash
+# PAN YOU NEED TO CHANGE YOU PASSWORD FOR GRE IN FEBRUARY
+FILE="/home/pi/RemoteMonitoringSystem/picture.log"
+TIMESTAMP=$(date "+%Y%m%d%H%M%S" | xargs)
+
+PICTUREDIR="/home/pi/RemoteMonitoringSystem/PiPics/"
+PICTUREPATH="/home/pi/RemoteMonitoringSystem/PiPics/${TIMESTAMP}.bmp"
+
+# Take picture
+sudo raspistill -t 1000 -e bmp -q 100 -n -hf -o ${PICTUREPATH}
+
+if [ ! -f ${FILE} ]; then
+	touch ${FILE}
+fi
+
+echo -e ${TIMESTAMP}".bmp" >> ${FILE}
+
+# check if current rclone token is still valid
+TOKENDATE=$(rclone config show  | grep -o '"expiry":"[^"]*' | grep -o '[^"]*$' | tr -d '-' | tr -d 'T' | tr -d ':' | awk -F "." '{print $1}' | tr -d " ")
+
+if [ ${TOKENDATE} -lt ${TIMESTAMP} ]; then
+# for onedrive the following inputs are required to reauthenticate and get a new expiration token ,y,y,1,0,y
+	(sleep 3; echo y; sleep 3; echo y; sleep 15; echo 1; sleep 3;  echo 0;sleep 5; echo y;) | rclone config reconnect OneDrivePan/
+	
+	#Uncomment the following two lines to see the new token onscrenn
+	#NEWTOKENDATE=$(rclone config show  | grep -o '"expiry":"[^"]*' | grep -o '[^"]*$')
+	#echo -e "\rnew token date: ${NEWTOKENDATE}"
+
+	#Close the web browers after authenticating
+	sudo pkill chromium-browse
+fi
+
+# check the last file uploaded to OneDrive/PiPics
+LASTFILESYNCED=$(rclone ls OneDrivePan:PiPics/ | tail -1 | awk '{print $2}')
+# remove file extension .bmp for a numerical comparison
+LASTFILESYNCED=$(echo ${LASTFILESYNCED} | awk -F "." '{print $1}')
+
+#Get all files from local dir for pictures
+FILESINPICDIR=($(ls ${PICTUREDIR} |awk -F "/" '{print $1}' |awk -F "." '{print$1}'))
+
+# go through all pictures in the dir and see if they are newer(date) compared to the last synced file to OneDrive/PiPics
+for i in ${FILESINPICDIR[@]}
+do
+    if ((  $i > ${LASTFILESYNCED} ));then
+#		Upload the file if it is missing from the OneDrive/PiPics, can take 10 to 30 seconds depending on internet connection
+		rclone copy "${PICTUREDIR}${i}.bmp" OneDrivePan:PiPics/ 
+		echo "Uploaded ${PICTUREDIR}${i}.bmp"
+    fi
+done
